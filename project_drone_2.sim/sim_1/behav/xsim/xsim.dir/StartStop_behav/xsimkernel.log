@@ -1,0 +1,7 @@
+Running: xsim.dir/StartStop_behav/xsimk -simmode gui -wdb StartStop_behav.wdb -simrunnum 0 -socket 35153
+Design successfully loaded
+Design Loading Memory Usage: 392880 KB (Peak: 392880 KB)
+Design Loading CPU Usage: 960 ms
+Simulation completed
+Simulation Memory Usage: 474616 KB (Peak: 532148 KB)
+Simulation CPU Usage: 970 ms

@@ -1,0 +1,10 @@
+0.7
+2020.2
+Nov  8 2024
+22:36:55
+/home/master26/ems26/e.chinnaya/Downloads/project_drone_2/project_drone_2.srcs/sim_1/new/BPStartStop_tb.vhd,1763377102,vhdl,,,,bpstartstop_tb,,,,,,,,
+/home/master26/ems26/e.chinnaya/Downloads/project_drone_2/project_drone_2.srcs/sim_1/new/Direction_tb.vhd,1763378781,vhdl,,,,direction_tb,,,,,,,,
+/home/master26/ems26/e.chinnaya/Downloads/project_drone_2/project_drone_2.srcs/sim_1/new/PWM_tb.vhd,1763377828,vhdl,,,,pwm_tb,,,,,,,,
+/home/master26/ems26/e.chinnaya/Downloads/project_drone_2/project_drone_2.srcs/sources_1/new/BPStartStop.vhd,1763376905,vhdl,/home/master26/ems26/e.chinnaya/Downloads/project_drone_2/project_drone_2.srcs/sim_1/new/BPStartStop_tb.vhd,,,bpstartstop,,,,,,,,
+/home/master26/ems26/e.chinnaya/Downloads/project_drone_2/project_drone_2.srcs/sources_1/new/Direction.vhd,1763460483,vhdl,/home/master26/ems26/e.chinnaya/Downloads/project_drone_2/project_drone_2.srcs/sim_1/new/Direction_tb.vhd,,,direction,,,,,,,,
+/home/master26/ems26/e.chinnaya/Downloads/project_drone_2/project_drone_2.srcs/sources_1/new/PWM.vhd,1763375847,vhdl,/home/master26/ems26/e.chinnaya/Downloads/project_drone_2/project_drone_2.srcs/sim_1/new/PWM_tb.vhd,,,pwm,,,,,,,,
