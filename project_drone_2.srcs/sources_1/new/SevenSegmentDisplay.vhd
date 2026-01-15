@@ -1,23 +1,28 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 01/08/2026
--- Design Name: 
--- Module Name: SevenSegmentDisplay - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
+--------------------------------------------------------------------
 -- Description: 7-segment display controller for Basys3 board
 --              Displays wheel modes on 4 digits
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- 
-----------------------------------------------------------------------------------
+--
+-- Inputs:
+--   clk        : board clock
+--   reset      : asynchronous active-high reset
+--   mode_left  : 2-bit speed mode for left motor
+--   mode_right : 2-bit speed mode for right motor
+--
+-- Outputs (Basys3 7-seg interface):
+--   seg : 7 cathodes (active LOW) for segments a..g
+--   an  : 4 anodes   (active LOW) to select one digit among 4
+--
+-- Multiplexing principle:
+--   Only one digit is activated at a time (an = "1110", "1101", "1011", "0111").
+--   The currently selected digit value is converted to a 7-seg pattern on seg.
+--
+-- Display mapping:
+--   mode "00" -> display "0"
+--   mode "01" -> display "1"
+--   mode "10" -> display "2"
+--   mode "11" -> display "3"
+-- Tens digits are forced to "0" (so we effectively show 0..3 on each motor).
+--------------------------------------------------------------------
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -35,21 +40,29 @@ entity SevenSegmentDisplay is
 end SevenSegmentDisplay;
 
 architecture Behavioral of SevenSegmentDisplay is
-    -- Refresh counter for multiplexing (~1kHz per digit)
-    -- 100MHz / 25000 = 4kHz total (1kHz per digit)
-    constant REFRESH_COUNT : integer := 25000;
+    -- Refresh counter for multiplexing.
+    -- With REFRESH_COUNT = 50000:
+    --   if clk = 50 MHz => 50000 cycles = 1 ms per digit -> full cycle = 4 ms
+    -- (This matches the typical 4 ms refresh used in the project.)
+    constant REFRESH_COUNT : integer := 50000; -- 25000;
     signal refresh_counter : unsigned(15 downto 0) := (others => '0');
+
+    -- digit_select selects which of the 4 digits is currently active (0..3).
     signal digit_select : unsigned(1 downto 0) := (others => '0');
     
-    -- BCD digits to display
+    -- BCD digits to display (4-bit each).
+    -- digit0/digit1 correspond to left wheel (ones/tens)
+    -- digit2/digit3 correspond to right wheel (ones/tens)
     signal digit0 : std_logic_vector(3 downto 0);  -- Right digit of left wheel
     signal digit1 : std_logic_vector(3 downto 0);  -- Left digit of left wheel
     signal digit2 : std_logic_vector(3 downto 0);  -- Right digit of right wheel
     signal digit3 : std_logic_vector(3 downto 0);  -- Left digit of right wheel
     
+    -- current_digit is the BCD value routed to the converter for the active digit.
     signal current_digit : std_logic_vector(3 downto 0);
     
-    -- Function to convert BCD to 7-segment (cathode common, active low)
+    -- Function to convert BCD to 7-segment (active low).
+    -- Returned vector is seg(6 downto 0) where '0' lights a segment.
     function bcd_to_7seg(bcd : std_logic_vector(3 downto 0)) return std_logic_vector is
         variable seg_out : std_logic_vector(6 downto 0);
     begin
@@ -70,42 +83,46 @@ architecture Behavioral of SevenSegmentDisplay is
     end function;
     
 begin
-    -- Convert mode to BCD digits
-    -- mode "00" -> display "01" (slow)
-    -- mode "01" -> display "02" (normal)
-    -- mode "10" -> display "03" (fast)
-    
-    -- Left wheel digits (rightmost on display)
-    digit0 <= "0001" when mode_left = "00" else
-              "0010" when mode_left = "01" else
-              "0011" when mode_left = "10" else
+
+    -- Convert each motor "mode" (2 bits) to a displayed digit
+    --  We display:
+    --      0 for stop, 1 for slow, 2 for standard, 3 for fast
+    --    Tens digits are kept at 0.
+
+    digit0 <= "0001" when mode_left = "01" else
+              "0010" when mode_left = "10" else
+              "0011" when mode_left = "11" else
               "0000";  -- Default: display 0
     digit1 <= "0000";  -- Always 0 for tens digit
     
-    -- Right wheel digits (leftmost on display)
-    digit2 <= "0001" when mode_right = "00" else
-              "0010" when mode_right = "01" else
-              "0011" when mode_right = "10" else
+    digit2 <= "0001" when mode_right = "01" else
+              "0010" when mode_right = "10" else
+              "0011" when mode_right = "11" else
               "0000";  -- Default: display 0
     digit3 <= "0000";  -- Always 0 for tens digit
     
-    -- Refresh counter and digit selector
+    -- Refresh counter: advances digit_select periodically
+    -- This implements time-multiplexing of the 4 digits.
+
     process(clk, reset)
     begin
         if reset = '1' then
+            -- Reset: restart refresh timing and select digit 0
             refresh_counter <= (others => '0');
             digit_select <= (others => '0');
         elsif rising_edge(clk) then
             if refresh_counter = REFRESH_COUNT - 1 then
                 refresh_counter <= (others => '0');
-                digit_select <= digit_select + 1;
+                digit_select <= digit_select + 1; -- cycles 00->01->10->11
             else
                 refresh_counter <= refresh_counter + 1;
             end if;
         end if;
     end process;
     
-    -- Digit multiplexing
+    -- Select which digit is active by driving anodes (active LOW),
+    -- and route the corresponding digit value to current_digit.
+
     process(digit_select, digit0, digit1, digit2, digit3)
     begin
         case digit_select is
@@ -122,12 +139,14 @@ begin
                 an <= "0111";  -- Activate digit 3 (leftmost)
                 current_digit <= digit3;
             when others =>
-                an <= "1111";
+                an <= "1111";  -- None selected (safe)
                 current_digit <= "1111";
         end case;
     end process;
     
-    -- Convert current digit to 7-segment
+    -- Segment output:
+    -- Convert the currently selected BCD digit to the 7-seg pattern.
+    
     seg <= bcd_to_7seg(current_digit);
     
 end Behavioral;
